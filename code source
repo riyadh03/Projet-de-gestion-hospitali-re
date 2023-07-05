@@ -1,0 +1,347 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+// Définition de la structure pour le patient
+typedef struct {
+    int id;
+    char patientName[50];
+    char patientAdresse[50];
+    char Carbonatrose[50];
+    char date[12];
+} Patient;
+// ------------------------------------------------------------
+
+
+// Déclaration du fichier
+FILE *fp;
+// ------------------------------------------------------------
+
+// Prototypes des fonctions
+void ajouterPatient();
+void listePatients();
+void dechargerPatient();
+void editerPatient();
+void rechercherPatient();
+int menu();
+// ------------------------------------------------------------
+
+int main() {
+    // Modification de la couleur de la console
+    system("color F4");
+    menu();
+    return 0;
+    // ------------------------------------------------------------
+}
+
+// Fonction pour ajouter un patient
+void ajouterPatient() {
+    Patient p;
+    char myDate[12];
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+    sprintf(myDate, "%02d/%02d/%d", tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900);
+    strcpy(p.date, myDate);
+
+    // Ouverture du fichier en mode "ajout binaire"
+    fp = fopen("patient.txt", "ab");
+    // ------------------------------------------------------------
+
+    printf("Entrez l'ID du patient : ");
+    scanf("%d", &p.id);
+
+    printf("Entrez le nom du patient : ");
+    fflush(stdin);
+    gets(p.patientName);
+
+    printf("Entrez l'adresse du patient : ");
+    fflush(stdin);
+    gets(p.patientAdresse);
+
+    printf("Entrez la maladie du patient : ");
+    fflush(stdin);
+    gets(p.Carbonatrose);
+
+    printf("\nPatient ajoute avec succes.");
+
+    // Écriture de la structure du patient dans le fichier
+    fwrite(&p, sizeof(p), 1, fp);
+    fclose(fp);
+    // ------------------------------------------------------------
+    
+// ------------------------------------------------------------    
+}
+
+// Fonction pour afficher la liste des patients
+void listePatients() {
+    Patient p;
+
+    system("CLS");
+    printf("<== Liste des Patients ==>\n\n");
+    printf("%-10s %-30s %-30s %-20s %s\n", "Id", "Nom du Patient", "Adresse", "Maladie", "Date");
+    printf("----------------------------------------------------------------------------------------------------------\n");
+
+    // Ouverture du fichier en mode "lecture binaire"
+    fp = fopen("patient.txt", "rb");
+    while (fread(&p, sizeof(p), 1, fp) == 1) {
+        printf("%-10d %-30s %-30s %-20s %s\n", p.id, p.patientName, p.patientAdresse, p.Carbonatrose, p.date);
+   }
+   // ------------------------------------------------------------
+
+    fclose(fp);
+}
+
+// Fonction pour décharger un patient
+void dechargerPatient() {
+    int id, found = 0;
+    Patient p;
+
+    system("CLS");
+    printf("<== Patient decharge ==>\n\n");
+    printf("Entrez l'ID du patient a decharger : ");
+    scanf("%d", &id);
+
+    FILE *ft;
+
+    // Ouverture du fichier original en mode "lecture binaire"
+    fp = fopen("patient.txt", "rb");
+    // ------------------------------------------------------------
+    
+    // Ouverture d'un fichier temporaire en mode "ecriture binaire"
+    ft = fopen("temp.txt", "wb");
+    // ------------------------------------------------------------
+
+    while (fread(&p, sizeof(p), 1, fp) == 1) {
+        if (id == p.id) {
+            found = 1;
+        } else {
+            // Écriture de la structure du patient dans le fichier temporaire
+            fwrite(&p, sizeof(p), 1, ft);
+            // ------------------------------------------------------------
+        }
+    }
+
+    if (found == 1) {
+        printf("\n\nPatient avec ID decharge.");
+    } else {
+        printf("\n\nEnregistrement introuvable !");
+    }
+
+    fclose(fp);
+    fclose(ft);
+
+    // Suppression du fichier original
+    remove("patient.txt");
+    // ------------------------------------------------------------
+    
+    // Renommage du fichier temporaire
+    rename("temp.txt", "patient.txt");
+    // ------------------------------------------------------------
+}
+
+// Fonction pour éditer les informations d'un patient
+void editerPatient() {
+    int id, found = 0;
+    Patient p;
+
+    system("CLS");
+    printf("<== Editeur Patient ==>\n\n");
+    printf("\t\t\nEntrez l'ID du patient a editer : ");
+    scanf("%d", &id);
+
+    // Ouverture du fichier en mode "lecture/écriture binaire"
+    fp = fopen("patient.txt", "rb+");
+    // ------------------------------------------------------------
+
+    while (fread(&p, sizeof(p), 1, fp) == 1) {
+        if (id == p.id) {
+            found = 1;
+            break;
+        }
+    }
+
+    if (found) {
+        printf("Details du patient :\n");
+        printf("Identifiant du patient : %d\n", p.id);
+        printf("Nom du patient : %s\n", p.patientName);
+        printf("Adresse du patient : %s\n", p.patientAdresse);
+        printf("Maladie du patient : %s\n\n", p.Carbonatrose);
+
+        printf("Entrez les nouveaux details :\n");
+
+        printf("Entrez le nouveau nom du patient : ");
+        fflush(stdin);
+        gets(p.patientName);
+
+        printf("Entrez la nouvelle adresse du patient : ");
+        fflush(stdin);
+        gets(p.patientAdresse);
+
+        printf("Entrez la nouvelle maladie du patient : ");
+        fflush(stdin);
+        gets(p.Carbonatrose);
+
+        fseek(fp, ftell(fp) - sizeof(p), 0);
+        // Écriture des nouvelles informations dans la structure du patient
+        fwrite(&p, sizeof(p), 1, fp);
+        printf("\n\nDetails du patient mis a jour avec succes.");
+    } else {
+        printf("\n\nPatient introuvable !");
+    }
+
+    fclose(fp);
+    // ------------------------------------------------------------
+}
+
+// Fonction pour rechercher un patient par ID
+void rechercherPatient() {
+    int id, found = 0;
+    Patient p;
+
+    system("CLS");
+    printf("<== Rechercher Patient ==>\n\n");
+    printf("\t\t\nEntrez l'ID du patient a rechercher : ");
+    scanf("%d", &id);
+
+    // Ouverture du fichier en mode "lecture binaire"
+    fp = fopen("patient.txt", "rb");
+    // ------------------------------------------------------------
+
+    while (fread(&p, sizeof(p), 1, fp) == 1) {
+        if (id == p.id) {
+            found = 1;
+            break;
+        }
+    }
+
+    if (found) {
+        printf("Details du patient :\n");
+        printf("Identifiant du patient : %d\n", p.id);
+        printf("Nom du patient : %s\n", p.patientName);
+        printf("Adresse du patient : %s\n", p.patientAdresse);
+        printf("Maladie du patient : %s\n", p.Carbonatrose);
+        printf("Date : %s\n\n", p.date);
+    } else {
+        printf("\n\nPatient introuvable !");
+    }
+
+    fclose(fp);
+}
+
+// Fonction pour afficher le menu principal et appeler les fonctions en fonction du choix de l'utilisateur
+int menu() {
+    int choice;
+
+    while (1) {
+        system("CLS");
+        printf("\n\t\t<== Systeme de gestion hospitaliere ==>\n");
+        printf("\n\t\t\n1. Ajouter Patient\n");
+        printf("\n\t\t\n2. Liste des Patients\n");
+        printf("\n\t\t\n3. Patient du dechargeur\n");
+        printf("\n\t\t\n4. Editeur Patient\n");
+        printf("\n\t\t\n5. Rechercher Patient\n");
+        printf("\n\t\t\n0. Quitter\n\n");
+        printf("\n\t\tChoisissez une option : ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 0:
+                exit(0);
+
+            case 1:
+                ajouterPatient();
+                break;
+
+            case 2:
+                listePatients();
+                break;
+
+            case 3:
+                dechargerPatient();
+                break;
+
+            case 4:
+                editerPatient();
+                break;
+
+            case 5:
+                rechercherPatient();
+                break;
+
+            default:
+                printf("Choix invalide...\n\n");
+        }
+
+        printf("\n\nAppuyez sur une touche pour continuer... ");
+        system("PAUSE");
+    }
+
+    return 0;
+}
+// ------------------------------------------------------------
+
+// Fonction principale du programme
+int main() {
+    system("color F4");
+    menu();
+    return 0;
+}
+// ------------------------------------------------------------
+
+// Fonction pour ajouter un patient
+void ajouterPatient() {
+    Patient p;
+    char myDate[12];
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+    sprintf(myDate, "%02d/%02d/%d", tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900);
+    strcpy(p.date, myDate);
+
+    // Ouverture du fichier en mode "ajout binaire"
+    fp = fopen("patient.txt", "ab");
+    // ------------------------------------------------------------
+    
+    printf("Entrez l'ID du patient : ");
+    scanf("%d", &p.id);
+
+    printf("Entrez le nom du patient : ");
+    fflush(stdin);
+    gets(p.patientName);
+
+    printf("Entrez l'adresse du patient : ");
+    fflush(stdin);
+    gets(p.patientAdresse);
+
+    printf("Entrez la maladie du patient : ");
+    fflush(stdin);
+    gets(p.Carbonatrose);
+
+    printf("\nPatient ajoute avec succes.");
+
+    // Écriture des informations du patient dans le fichier
+    fwrite(&p, sizeof(p), 1, fp);
+    fclose(fp);
+    // ------------------------------------------------------------
+    // ------------------------------------------------------------
+}
+
+// Fonction pour afficher la liste des patients
+void listePatients() {
+    Patient p;
+
+    system("CLS");
+    printf("<== Liste des Patients ==>\n\n");
+    printf("\t\t\n%-10s %-30s %-30s %-20s  %s\n", "Id", "Nom du Patient", "Adresse", "Maladie", "Date");
+    printf("----------------------------------------------------------------------------------------------------------\n");
+
+    // Ouverture du fichier en mode "lecture binaire"
+    fp = fopen("patient.txt", "rb");
+    // ------------------------------------------------------------
+    
+    while (fread(&p, sizeof(p), 1, fp) == 1) {
+        printf("%-10d %-30s  %-30s %-20s %s\n", p.id, p.patientName, p.patientAdresse, p.Carbonatrose, p.date);
+    }
+
+    fclose(fp);
+}
